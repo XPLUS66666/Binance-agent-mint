@@ -64,9 +64,13 @@ This tool performs read-only on-chain analysis and is provided "as is" for educa
 
 ## 中文说明
 
+![banner_zh](assets/banner_zh.png)
+
 > 币安 Agent ID（BSC）铸造只读预检。丢一个网址或合约地址（CA），约 3 秒看清免费/付费、余量、钱包资格和风险。
 
 **全程只读：不签名、不授权、不付款、不发交易。** 打不打，你自己决定。
+
+![flow_zh](assets/flow_zh.png)
 
 ### 功能
 - **网址或 CA 都行**：从页面、同站 JS、`/agents.md`、`/llms.txt` 自动找铸造合约，过滤 WBNB/USDT/Router 等基础设施地址
