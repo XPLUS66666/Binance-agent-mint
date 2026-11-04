@@ -12,6 +12,7 @@ description: 币安 Agent（BSC）铸造只读预检：发网址或 CA，3 秒�
 ```bash
 python3 scripts/precheck.py --input <网址或CA> --human
 python3 scripts/precheck.py --input <CA1> --input <CA2> --human   # 批量并行
+python3 scripts/precheck.py --input <CA> --deep --human          # 第二层深查
 python3 scripts/precheck.py --input <CA> --qty 2 --human          # 指定数量
 python3 scripts/precheck.py --input <CA> --wallets 0xAAA,0xBBB     # 换检查的钱包
 python3 scripts/precheck.py record <CA> success|fail "原因" --tx 0x…  # 记真实铸造结果
@@ -22,6 +23,16 @@ python3 scripts/precheck.py lib                                   # 看经验库
 - 只给网址：先从页面、同站 JS、`/agents.md`、`/llms.txt`、`/contracts`、`/mint` 里找 CA，按上下文打分（mint/nft/contract/sale/claim 附近的地址加分），过滤掉基础设施地址（WBNB/USDT/USDC/BUSD/Pancake 路由/Agent ID 注册表），再按“有代码 + ABI 里有 mint 类函数”选最像铸造合约的那一个；还是找不到就报“没找到 CA”，不猜地址。
 - 输出是 JSON（机器读）+ `--human` 时附一份简单简体中文摘要（给用户看，摘要打到 stderr，stdout 仍是 JSON）。`--full` 输出完整报告（含全部读数和模拟）。
 - 每次运行默认写一条运行记录到 `runs/runs.jsonl` 和 `timings.jsonl`（文件锁防并发写坏），不改 `history.json`。经验库只由人工复核后更新。
+
+## 定位：两层，不是万能
+
+- **第一层 粗筛（默认，约 3 秒）**：快速毙掉卖光的、没开的、要授权的、模拟会 revert 的。适合雷达第一道过滤。
+- **第二层 深查（`--deep`，再加约 2 秒）**：
+  1. 卖出路径：找合约本身和它指向的奖励/支付代币，查 PancakeSwap V2/V3 池子（WBNB、USDT）流动性，V2 用 router 报 1 枚理论价；从池子模拟转出代币，被拒标貔貅。NFT 查合约内置市场与开放状态。
+  2. 锁仓/点火：NFT 从真实持有人模拟 transferFrom（被拒=灵魂绑定/锁仓）；读 trading/launch/ignite/lock/unlock/vest/tax 类 getter，未来解锁时间换算 CST；列出 owner 可切换的开关（enableTrading、blacklist、setTax、setMaxTx 等）。
+  3. 押金退款覆盖率：有 refund/deposit/redeem 类函数时，读合约 BNB 或支付代币余额，对比总押金（或单份退款额 × 已铸），给覆盖率；owner 有提款函数另标。
+- 每项给 ✅ / ⚠️ / ❌ / ❓。**❓ = 需读源码，绝不当成通过。**
+- **深查仍替代不了人工复核**：卖出税需要真实持仓和授权才能测（只读模式不做）；第三方 NFT 市场的挂单/成交、点火条件写在复杂逻辑里、押金能否被 owner 挪用，最终都要读源码加链上实测。结论以人工复核为准。
 
 ## 工作流程（脚本自动跑，AI 只在陌生合约时补分析）
 

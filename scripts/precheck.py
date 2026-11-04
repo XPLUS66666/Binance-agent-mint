@@ -961,7 +961,7 @@ def run_target(inp, qty, wallets, hist_path):
              "balances": {k: round(v / 1e18, 6) for k, v in bals2.items()},
              "mintCandidates": [n for _, n in sim_cands],
              "simulations": sims, "risk_flags": flags, "times": tf,
-             "history_match": hist, "verdict": verdict,
+             "history_match": hist, "verdict": verdict, "_names": names,
              "timings": {k: v for k, v in t.items() if k != "_start"},
              "total_s": round(time.time() - t["_start"], 2)}
         results.append(r)
@@ -1001,6 +1001,7 @@ def main():
     ap.add_argument("--qty", type=int, default=1)
     ap.add_argument("--wallets", default=None)
     ap.add_argument("--full", action="store_true")
+    ap.add_argument("--deep", action="store_true", help="tier-2: sell path, lock/ignite, refund coverage")
     ap.add_argument("--tx", default=None)
     ap.add_argument("cmd", nargs="?", default=None)
     ap.add_argument("rest", nargs="*")
@@ -1040,6 +1041,17 @@ def main():
     else:
         with ThreadPoolExecutor(max_workers=min(4, len(inputs))) as ex:
             reports = list(ex.map(lambda i: run_target(i, args.qty, wallets, hist_path), inputs))
+    if args.deep:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import deep as _deep
+        for r in reports:
+            if r.get("contract") and r.get("_names") is not None:
+                try:
+                    r["deep"] = _deep.deep_check(r)
+                except Exception as e:
+                    r["deep"] = {"overall": "unknown", "error": str(e)[:200]}
+    for r in reports:
+        r.pop("_names", None) if not args.full else None
     out = reports[0] if len(reports) == 1 else {"results": reports}
     if not args.full and len(reports) == 1:
         r = reports[0]
@@ -1048,7 +1060,7 @@ def main():
             "proxy", "impl", "codeHash", "selectorCount", "aidGated", "sourcify",
             "abi_source", "abi_verified", "name", "symbol", "balances",
             "mintCandidates", "simulations", "risk_flags", "times", "history_match",
-            "verdict", "timings", "total_s")}
+            "verdict", "timings", "total_s", "deep")}
         out["supply"] = r.get("verdict", {}).get("supply")
         out["global_views"] = {k: v for k, v in (r.get("global") or {}).items()
                                if not isinstance(v, dict)}
@@ -1057,6 +1069,9 @@ def main():
         print("\n--- 摘要 ---", file=sys.stderr)
         for r in reports:
             print(human_summary(r), file=sys.stderr)
+            if r.get("deep") and "sellPath" in r["deep"]:
+                import deep as _deep
+                print(_deep.deep_summary(r["deep"]), file=sys.stderr)
             if len(reports) > 1:
                 print("---", file=sys.stderr)
     if not args.no_record:

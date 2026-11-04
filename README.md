@@ -22,6 +22,15 @@
 - **Batch & fast** – multiple targets in parallel, ~2–3 s each, public RPCs, no API key
 - **Agent-ready** – ships a `SKILL.md` you can drop into any AI agent as a skill
 
+## Two tiers – know what it is
+- **Tier 1 · quick filter (default, ~3 s)** – kills sold-out, not-open, approval-required and will-revert mints. Built for the first pass of a radar.
+- **Tier 2 · deep check (`--deep`, ~2 s more)**
+  - **Sell path** – PancakeSwap V2/V3 pools (WBNB/USDT) for the contract and any reward/payment token it points to, router quote, simulated transfer out of the pool (rejected = honeypot flag); NFT in-contract market & open state
+  - **Lock / ignition** – simulated NFT `transferFrom` from a real holder (rejected = soulbound/locked); trading/launch/lock/vesting/tax getters with unlock times; owner toggles (enableTrading, blacklist, setTax…)
+  - **Refund / deposit coverage** – contract balance vs. total deposits (or refund × minted), coverage %, owner-withdraw flag
+- Each item is ✅ / ⚠️ / ❌ / ❓. **❓ means read the source – never a pass.**
+- It does **not** replace a human audit: sell tax needs a real holder + approval (not done in read-only mode); third-party NFT market depth, complex ignition logic and whether the owner can touch deposits still need source reading and live tests.
+
 ## Install
 ```bash
 git clone https://github.com/XPLUS66666/Binance-agent-mint.git
@@ -42,6 +51,9 @@ python3 scripts/precheck.py --input 0xA... --input 0xB... --human
 # check your own wallets (optional; add Agent ID tokenId for accuracy)
 python3 scripts/precheck.py --input 0xCONTRACT --wallets "main=0xYOUR_ADDR:0xYOUR_AGENT_ID,alt=0xOTHER" --human
 export BSC_PRECHECK_WALLETS="main=0xYOUR_ADDR"   # or via env
+
+# tier-2 deep check: sell path, lock/ignition, refund coverage
+python3 scripts/precheck.py --input 0xCONTRACT --deep --human
 
 # quantity / full report
 python3 scripts/precheck.py --input 0xCONTRACT --qty 2 --full
@@ -83,6 +95,15 @@ This tool performs read-only on-chain analysis and is provided "as is" for educa
 - **风险标红**：源码未验证、可升级代理、ERC20 计价（需授权）、owner 可改价/暂停/提款
 - **批量快速**：多目标并行，单个约 2–3 秒，公共 RPC，无需 API key
 - **AI Agent 可用**：自带 `SKILL.md`，可直接作为 Agent 技能
+
+### 定位：两层
+- **第一层 粗筛（默认约 3 秒）**：毙掉卖光的、没开的、要授权的、会 revert 的，适合雷达第一道过滤。
+- **第二层 深查（`--deep`，再加约 2 秒）**
+  - **卖出路径**：合约和奖励/支付代币的 PancakeSwap V2/V3 池子（WBNB/USDT）、router 报价、从池子模拟转出（被拒标貔貅）；NFT 内置市场与开放状态
+  - **锁仓/点火**：从真实持有人模拟 NFT transferFrom（被拒=灵魂绑定/锁仓）；交易/点火/锁仓/归属/税率读数与解锁时间；owner 开关（enableTrading、blacklist、setTax…）
+  - **押金退款覆盖率**：合约余额对比总押金（或单份退款 × 已铸），给覆盖率，owner 提款函数另标
+- 每项 ✅ / ⚠️ / ❌ / ❓，**❓ = 需读源码，绝不当成通过**。
+- **替代不了人工复核**：卖出税要真实持仓和授权才能测（只读不做）；第三方市场深度、复杂点火逻辑、押金能否被 owner 挪用，仍需读源码加实测。
 
 ### 安装与用法
 同上方 Install / Usage。`--human` 输出中文摘要到 stderr，stdout 为 JSON。钱包用 `--wallets` 或环境变量 `BSC_PRECHECK_WALLETS` 配置（可选）。
