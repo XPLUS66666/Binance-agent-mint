@@ -24,7 +24,7 @@
 
 ## Install
 ```bash
-git clone https://github.com/XPLUS66666/binance-agent-mint.git
+git clone https://github.com/XPLUS66666/Binance-agent-mint.git
 cd binance-agent-mint
 pip install requests pycryptodome
 ```
