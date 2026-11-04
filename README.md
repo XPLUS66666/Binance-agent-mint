@@ -21,6 +21,7 @@
 - **Risk flags** – unverified source, upgradeable proxy, ERC20 pricing (needs approval), owner can change price / pause / withdraw
 - **Batch & fast** – multiple targets in parallel, ~2–3 s each, public RPCs, no API key
 - **Agent-ready** – ships a `SKILL.md` you can drop into any AI agent as a skill
+- **Prewarm for time-locked mints** – for a known opening, run the precheck at least 1 hour before it opens and confirm prewarm separately; a scheduled task is not prewarm (see below)
 
 ## Two tiers – know what it is
 - **Tier 1 · quick filter (default, ~3 s)** – kills sold-out, not-open, approval-required and will-revert mints. Built for the first pass of a radar.
@@ -30,6 +31,16 @@
   - **Refund / deposit coverage** – contract balance vs. total deposits (or refund × minted), coverage %, owner-withdraw flag
 - Each item is ✅ / ⚠️ / ❌ / ❓. **❓ means read the source – never a pass.**
 - It does **not** replace a human audit: sell tax needs a real holder + approval (not done in read-only mode); third-party NFT market depth, complex ignition logic and whether the owner can touch deposits still need source reading and live tests.
+
+## Prewarm for time-locked openings
+
+For a mint with a known opening time, the precheck is the prewarm — do not wait until the opening to run it, and do not rely on a task scheduled to fire minutes before it. A scheduled task is not prewarm.
+
+- Run the full precheck at least 1 hour before the opening (contract, source, mint function and calldata, price, wallet eligibility and unclaimed status, gas estimate, RPC failover) and confirm prewarm completion separately.
+- If the precheck verdict is NOT_STARTED, keep the prewarm result on file (contract, function, parameters, eligibility, gas) and reuse those ready parameters for the preview at the opening instead of re-checking everything from scratch.
+- After the opening, poll lean: every 2–5 seconds, make only the single essential simulation call. Do not redo the full precheck or read unrelated state inside the poll loop, and do not let a round stretch to 20+ seconds.
+- If prewarm has not completed and been confirmed, say plainly that it is not prewarmed.
+- Lesson (2026-11-04): a free mint opened at 14:30, its scheduled task fired at 14:29, the execution script only started at 14:30:26, and the first simulation at 14:30:41 already reverted as sold out. That is why this section exists.
 
 ## Install
 ```bash
@@ -95,6 +106,7 @@ This tool performs read-only on-chain analysis and is provided "as is" for educa
 - **风险标红**：源码未验证、可升级代理、ERC20 计价（需授权）、owner 可改价/暂停/提款
 - **批量快速**：多目标并行，单个约 2–3 秒，公共 RPC，无需 API key
 - **AI Agent 可用**：自带 `SKILL.md`，可直接作为 Agent 技能
+- **卡死时间项目预热**：已知开盘的项目，预检要提前至少 1 小时跑完并单独确认预热完成；已排定的任务不等于已预热（见下）
 
 ### 定位：两层
 - **第一层 粗筛（默认约 3 秒）**：毙掉卖光的、没开的、要授权的、会 revert 的，适合雷达第一道过滤。
@@ -104,6 +116,16 @@ This tool performs read-only on-chain analysis and is provided "as is" for educa
   - **押金退款覆盖率**：合约余额对比总押金（或单份退款 × 已铸），给覆盖率，owner 提款函数另标
 - 每项 ✅ / ⚠️ / ❌ / ❓，**❓ = 需读源码，绝不当成通过**。
 - **替代不了人工复核**：卖出税要真实持仓和授权才能测（只读不做）；第三方市场深度、复杂点火逻辑、押金能否被 owner 挪用，仍需读源码加实测。
+
+### 卡死时间项目预热
+
+已知开盘时间的项目，预检就是开盘前预热，不能等到开盘后才跑，也不能只靠一个开盘前几分钟触发的定时任务。已排定的任务不等于已预热。
+
+- 开盘前至少提前 1 小时跑完预检：合约、源码、mint 函数与 calldata、价格、钱包资格与未领状态、gas 预估、RPC 换路，全部跑通，并单独确认一次预热完成。开盘前模拟回滚 NotYet 是预期，不算预热失败，关键是调用路径本身通。
+- 预检结论是 NOT_STARTED 时，仍要把预热结果留档（合约、函数、参数、资格、gas），开盘后直接用这套现成参数走预览，不重新从头核一遍。
+- 开盘后轮询只做最关键的一个模拟调用，每 2-5 秒一轮，不在轮询里重做整套预检、不读无关状态、不许一轮拖到 20 多秒。
+- 预热没完成、没确认，就明说“没预热好”，绝不把“任务已排定”说成“已准备好”。
+- 实战教训（2026-11-04）：某免费项目 14:30 开盘，定时任务 14:29 触发、执行脚本 14:30:26 才启动、第一轮模拟 14:30:41 已回滚免费档耗尽，窗口就是这么丢的。本节就是为此而加。
 
 ### 安装与用法
 同上方 Install / Usage。`--human` 输出中文摘要到 stderr，stdout 为 JSON。钱包用 `--wallets` 或环境变量 `BSC_PRECHECK_WALLETS` 配置（可选）。
