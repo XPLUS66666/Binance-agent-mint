@@ -1,0 +1,28 @@
+name: agent_drop_patrol_tracking
+title: Agent drop patrol and tracking
+description: Discover, verify, track and close agent gated drops across patrol rounds, including broken legs, fixed tier thresholds and held item sell paths.
+version: 1.1.0
+category: Work and knowledge
+include_in_prompt: false
+skill_improvement:
+  managed: true
+  status: active
+  evidence_handles:
+  - work:db1a1040
+  - work:8e134d57
+  - work:3481e1ee
+  - work:3ebf05d6
+  - work:7a26a706e35f
+  - work:84027d44
+  - work:37bb0a6a
+  - work:197d4bb7
+  - work:96066e63
+  measurement:
+    proxy_metric_id: patrol_tracking_close_rate
+    success_criterion: During the window, every patrol round with a broken leg records each second route tried and its outcome, no partial round is reported as clean, every open project tracked to one close receives its 80 percent progress notice and its closing update, and every held item report states a verified sell path or states unknown with sources tried. A window with no patrol round is inconclusive, not a pass.
+    window_days: 21
+  needs_review: false
+  rationale: 'Ten active managed skills trigger consolidation, and four of them cover one patrol workflow with overlapping tracking, threshold and closing rules. Agent drop discovery, patrol leg breaks, paid fixed tier tracking and held NFT valuation were read in full and each prescribes the same round record, recheck and single close, differing only by leg or threshold. The 2026-11-02 evidence shows that fragmentation in practice: patrol rounds stayed partial, Harvest phases filled between rounds, and several projects closed in the same round they were first tracked (3481e1ee, 3ebf05d6, 7a26a706e35f, 84027d44). The merged skill preserves all four methods, reconciles the 80 percent progress notice with the 95 percent free escalation and the paid tier alert, adds the small quota and name-only first report exception that 2026-11-02 practice used, and adds two 2026-11-02 mint lessons: a generic simulation block on an unverified contract can be a project side funding shortfall rather than user ineligibility (37bb0a6a), and a mint argument, not only a price field, decides free versus paid (197d4bb7). No other family was merged: time window race versus session recovery, preflight versus state writes, and language gate versus external signature check cover distinct objects.'
+  review_after: 2026-11-23T10:50:46.406853+00:00
+  reviewed_at: 2026-11-02T10:50:46.406853+00:00
+  run_id: sirun_e03363e73712481b9b19b819417e909b

@@ -80,6 +80,10 @@ stdout is JSON (for scripts / agents).
 - ERC20-priced mints need an approval – the tool only flags it, never approves
 - Brand-new unverified contracts rely on signature-DB guesses
 
+## Agent drop patrol skill
+
+This repo also ships the agent drop patrol skill (`skills/agent-drop-patrol-tracking/`, v1.1.0): discover, verify, track and close agent-gated drops across patrol rounds, including broken-leg alternative routes, fixed tier thresholds and held item sell paths. Its newest rule: for a voucher-gated free mint, the real deadline is the backend registration/voucher window, not the on-chain open time — check registration, allocation and voucher status in the same round a project is discovered. See `skills/agent-drop-patrol-tracking/SKILL.md` and `CHANGELOG.md`.
+
 ## ⚠️ Disclaimer
 This tool performs read-only on-chain analysis and is provided "as is" for educational and research purposes. It is **not financial advice** and not affiliated with or endorsed by Binance. A "mintable" verdict is a snapshot, not a guarantee: contract owners can change prices, pause, or withdraw at any time, and projects can go to zero. Always do your own research. **Never share your seed phrase or private key with any website, script, or tool.** The authors accept no liability for any loss arising from use of this software.
 
@@ -134,6 +138,10 @@ This tool performs read-only on-chain analysis and is provided "as is" for educa
 - Merkle 证明 / 后端签名型铸造：空证明模拟会 revert，需从项目方 API 拿证明
 - ERC20 计价的铸造需要授权：脚本只标出，绝不授权
 - 很新的未验证合约只能靠签名库猜函数名
+
+### Agent 掉落巡查技能
+
+本仓库同时收录 Agent 掉落巡查技能（`skills/agent-drop-patrol-tracking/`，v1.1.0）：发现、验证、追踪、收尾 Agent 门槛的掉落项目，含断腿替补路、固定档阈值、持有物卖出路径。最新一条：凭证制的免费项目，真正的截止时间是后端注册/凭证窗口，不是链上开盘时间，新项目一发现当轮就查注册、名额和凭证状态。见 `skills/agent-drop-patrol-tracking/SKILL.md` 与 `CHANGELOG.md`。
 
 ### ⚠️ 免责声明
 本工具仅做只读链上分析，按"现状"提供，用于学习与研究，**不构成任何投资建议**，与币安（Binance）无关联、未获其背书。"可打"只是当时的快照，不代表保证：合约 owner 可能随时改价、暂停或提款，项目可能归零。请自行研究判断。**永远不要把助记词或私钥交给任何网站、脚本或工具。** 因使用本软件造成的任何损失，作者概不负责。
